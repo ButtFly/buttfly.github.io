@@ -50,6 +50,7 @@ UIGraphicsEndImageContext(); //结束画布
 - (void)viewDidLoad {
     [super viewDidLoad];
     // Do any additional setup after loading the view, typically from a nib.
+    self.view.backgroundColor = [UIColor yellowColor];
     
     UIGraphicsBeginImageContext(self.view.bounds.size);
     CGContextRef contextRef = UIGraphicsGetCurrentContext();
