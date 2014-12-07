@@ -1,13 +1,10 @@
 # Site settings
 title: ButtFly Blog
 email: 315585758@qq.com
-<<<<<<< HEAD
-description: "!"
-=======
 description: "流水渐随春远，行云终将谁同！"
->>>>>>> gh-pages
+
 baseurl: ""
-url: "http://yourdomain.com"
+url: "https://github.com/ButtFly"
 twitter_username: 
 github_username:  ButtFly
 facebook_username:  
