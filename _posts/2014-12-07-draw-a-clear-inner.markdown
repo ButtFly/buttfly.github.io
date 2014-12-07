@@ -2,7 +2,7 @@
 layout:     post
 title:      "iOS中如何挖出一个透明的图形"
 subtitle:   "挖出透明的三角形，圆形，以及五角星"
-date:       2014-11-30 12:00:00
+date:       2014-12-07 12:00:00
 author:     "ButtFly"
 ---
 
