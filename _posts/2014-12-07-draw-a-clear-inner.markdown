@@ -7,7 +7,7 @@ author:     "ButtFly"
 header-img: "img/home-bg.jpg"
 ---
 
-1.__准备工作__  
+__准备工作__  
 
 准备一个 _CGContextRef_ 来构建我们的“画布”。得到一个 _CGContextRef_ 的方式有很多，最常用的有两种：在 _UIView_ 的子类的 _-drawRect:_ 方法中使用 _UIGraphicsGetCurrentContext()_ 得到；还有一种就可以在任何的地方使用，那就是使用 _UIGraphicsBeginImageContext()_ 和 _UIGraphicsEndImageContext()_ 来开始一个画布，并且在他们中间使用 _UIGraphicsGetCurrentContext()_ 得到这个画布进行我们的创作。
 
@@ -66,5 +66,63 @@ header-img: "img/home-bg.jpg"
 	    UIGraphicsEndImageContext();
 	}
 
-试试看你得到了什么。
+试试看你得到了什么。  
+
+__挖出任意图形__  
+
+这个时候，我们就要用到另一个东西了。那就是怎么画出自己想要的图形。当然，要达到这样的结果，方法是很多的，这个不是本文的研讨范围之内了。本文使用较简单的方式，那就是使用 _UIBezierPath_ 。 直接上代码：    
+
+	- (void)viewDidLoad {
+	    [super viewDidLoad];
+	    // Do any additional setup after loading the view, typically from a nib.
+	    self.view.backgroundColor = [UIColor yellowColor];
+	    
+	    UIGraphicsBeginImageContext(self.view.bounds.size);
+	    CGContextRef contextRef = UIGraphicsGetCurrentContext();
+	    UIBezierPath * path = [UIBezierPath bezierPathWithRect:self.view.bounds];
+	    [[UIColor greenColor] set];
+	    CGContextAddPath(contextRef, path.CGPath);
+	    CGContextFillPath(contextRef);
+	    
+	    /**画出六角星*/
+	    UIBezierPath * innerPath = [UIBezierPath bezierPath];
+	    CGFloat width = self.view.bounds.size.width;
+	    CGFloat centerX = self.view.center.x;
+	    CGFloat centerY = self.view.center.y;
+	    [innerPath moveToPoint:CGPointMake(centerX, centerY - 0.5 * width)];
+	    [innerPath addLineToPoint:CGPointMake(centerX - 0.155 * width, centerY - 0.26 * width)];
+	    [innerPath addLineToPoint:CGPointMake(centerX - 0.444 * width, centerY - 0.26 * width)];
+	    [innerPath addLineToPoint:CGPointMake(centerX - 0.296 * width, centerY)];
+	    [innerPath addLineToPoint:CGPointMake(centerX - 0.444 * width, centerY + 0.26 * width)];
+	    [innerPath addLineToPoint:CGPointMake(centerX - 0.155 * width, centerY + 0.26 * width)];
+	    [innerPath addLineToPoint:CGPointMake(centerX, centerY + 0.5 * width)];
+	    [innerPath addLineToPoint:CGPointMake(centerX + 0.155 * width, centerY + 0.26 * width)];
+	    [innerPath addLineToPoint:CGPointMake(centerX + 0.444 * width, centerY + 0.26 * width)];
+	    [innerPath addLineToPoint:CGPointMake(centerX + 0.296 * width, centerY)];
+	    [innerPath addLineToPoint:CGPointMake(centerX + 0.444 * width, centerY - 0.26 * width)];
+	    [innerPath addLineToPoint:CGPointMake(centerX + 0.155 * width, centerY - 0.26 * width)];
+	    [innerPath closePath];
+	    /***/
+	    
+	    CGContextAddPath(contextRef, innerPath.CGPath);
+	    CGContextClip(contextRef);
+	    CGContextClearRect(contextRef, self.view.bounds);
+	    /**这部分代码是在视图的view的layer上面加上背景为根据我们画布创建的layer*/
+	    UIImage * image = UIGraphicsGetImageFromCurrentImageContext();
+	    CALayer * layer = [CALayer layer];
+	    layer.backgroundColor = [[UIColor colorWithPatternImage:image] CGColor];
+	    layer.frame = self.view.bounds;
+	    [self.view.layer addSublayer:layer];
+	    /***/
+	    UIGraphicsEndImageContext();
+	}
+
+
+试试看出现了什么。值得注意的是，由于我们用的是 _UIGraphicsGetImageFromCurrentImageContext()_ 得到 _UIImage_ 。这里如果图形不是上下对称的话，就会出现上下颠倒的情况。这里的原因是因为 _CIImage_ 和 _UIImage_ 的坐标系是颠倒的。要解决这种情况就需要转换一下坐标系。直接在上面代码中 _CGContextRef contextRef = UIGraphicsGetCurrentContext()_ 下面加上    
+
+	CGContextTranslateCTM(context, 0, self.view.bounds.size.height);
+	CGContextScaleCTM(context, 1.0, -1.0);
+	    
+好了就写到这里了，这是我的第一篇博文，也不知道怎么写好一点，相当羞涩啊。至于今天写的有什么用途呢。那就要说到 _mask_ 这个东西了。这个等以后再写吧。
+ 
 

@@ -5,13 +5,13 @@
     <description>流水渐随春远，行云终将谁同！</description>
     <link>https://github.com/ButtFly/</link>
     <atom:link href="https://github.com/ButtFly/feed.xml" rel="self" type="application/rss+xml" />
-    <pubDate>Sun, 07 Dec 2014 16:32:16 +0800</pubDate>
-    <lastBuildDate>Sun, 07 Dec 2014 16:32:16 +0800</lastBuildDate>
+    <pubDate>Wed, 10 Dec 2014 21:38:25 +0800</pubDate>
+    <lastBuildDate>Wed, 10 Dec 2014 21:38:25 +0800</lastBuildDate>
     <generator>Jekyll v2.5.1</generator>
     
       <item>
         <title>iOS中如何挖出一个透明的图形</title>
-        <description>&lt;p&gt;1.&lt;strong&gt;准备工作&lt;/strong&gt;  &lt;/p&gt;
+        <description>&lt;p&gt;&lt;strong&gt;准备工作&lt;/strong&gt;  &lt;/p&gt;
 
 &lt;p&gt;准备一个 &lt;em&gt;CGContextRef&lt;/em&gt; 来构建我们的“画布”。得到一个 &lt;em&gt;CGContextRef&lt;/em&gt; 的方式有很多，最常用的有两种：在 &lt;em&gt;UIView&lt;/em&gt; 的子类的 &lt;em&gt;-drawRect:&lt;/em&gt; 方法中使用 &lt;em&gt;UIGraphicsGetCurrentContext()&lt;/em&gt; 得到；还有一种就可以在任何的地方使用，那就是使用 &lt;em&gt;UIGraphicsBeginImageContext()&lt;/em&gt; 和 &lt;em&gt;UIGraphicsEndImageContext()&lt;/em&gt; 来开始一个画布，并且在他们中间使用 &lt;em&gt;UIGraphicsGetCurrentContext()&lt;/em&gt; 得到这个画布进行我们的创作。&lt;/p&gt;
 
@@ -73,7 +73,65 @@ UIGraphicsEndImageContext(); //结束画布
 }
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;试试看你得到了什么。&lt;/p&gt;
+&lt;p&gt;试试看你得到了什么。  &lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;挖出任意图形&lt;/strong&gt;  &lt;/p&gt;
+
+&lt;p&gt;这个时候，我们就要用到另一个东西了。那就是怎么画出自己想要的图形。当然，要达到这样的结果，方法是很多的，这个不是本文的研讨范围之内了。本文使用较简单的方式，那就是使用 &lt;em&gt;UIBezierPath&lt;/em&gt; 。 直接上代码：    &lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;- (void)viewDidLoad {
+    [super viewDidLoad];
+    // Do any additional setup after loading the view, typically from a nib.
+    self.view.backgroundColor = [UIColor yellowColor];
+    
+    UIGraphicsBeginImageContext(self.view.bounds.size);
+    CGContextRef contextRef = UIGraphicsGetCurrentContext();
+    UIBezierPath * path = [UIBezierPath bezierPathWithRect:self.view.bounds];
+    [[UIColor greenColor] set];
+    CGContextAddPath(contextRef, path.CGPath);
+    CGContextFillPath(contextRef);
+    
+    /**画出六角星*/
+    UIBezierPath * innerPath = [UIBezierPath bezierPath];
+    CGFloat width = self.view.bounds.size.width;
+    CGFloat centerX = self.view.center.x;
+    CGFloat centerY = self.view.center.y;
+    [innerPath moveToPoint:CGPointMake(centerX, centerY - 0.5 * width)];
+    [innerPath addLineToPoint:CGPointMake(centerX - 0.155 * width, centerY - 0.26 * width)];
+    [innerPath addLineToPoint:CGPointMake(centerX - 0.444 * width, centerY - 0.26 * width)];
+    [innerPath addLineToPoint:CGPointMake(centerX - 0.296 * width, centerY)];
+    [innerPath addLineToPoint:CGPointMake(centerX - 0.444 * width, centerY + 0.26 * width)];
+    [innerPath addLineToPoint:CGPointMake(centerX - 0.155 * width, centerY + 0.26 * width)];
+    [innerPath addLineToPoint:CGPointMake(centerX, centerY + 0.5 * width)];
+    [innerPath addLineToPoint:CGPointMake(centerX + 0.155 * width, centerY + 0.26 * width)];
+    [innerPath addLineToPoint:CGPointMake(centerX + 0.444 * width, centerY + 0.26 * width)];
+    [innerPath addLineToPoint:CGPointMake(centerX + 0.296 * width, centerY)];
+    [innerPath addLineToPoint:CGPointMake(centerX + 0.444 * width, centerY - 0.26 * width)];
+    [innerPath addLineToPoint:CGPointMake(centerX + 0.155 * width, centerY - 0.26 * width)];
+    [innerPath closePath];
+    /***/
+    
+    CGContextAddPath(contextRef, innerPath.CGPath);
+    CGContextClip(contextRef);
+    CGContextClearRect(contextRef, self.view.bounds);
+    /**这部分代码是在视图的view的layer上面加上背景为根据我们画布创建的layer*/
+    UIImage * image = UIGraphicsGetImageFromCurrentImageContext();
+    CALayer * layer = [CALayer layer];
+    layer.backgroundColor = [[UIColor colorWithPatternImage:image] CGColor];
+    layer.frame = self.view.bounds;
+    [self.view.layer addSublayer:layer];
+    /***/
+    UIGraphicsEndImageContext();
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;试试看出现了什么。值得注意的是，由于我们用的是 &lt;em&gt;UIGraphicsGetImageFromCurrentImageContext()&lt;/em&gt; 得到 &lt;em&gt;UIImage&lt;/em&gt; 。这里如果图形不是上下对称的话，就会出现上下颠倒的情况。这里的原因是因为 &lt;em&gt;CIImage&lt;/em&gt; 和 &lt;em&gt;UIImage&lt;/em&gt; 的坐标系是颠倒的。要解决这种情况就需要转换一下坐标系。直接在上面代码中 &lt;em&gt;CGContextRef contextRef = UIGraphicsGetCurrentContext()&lt;/em&gt; 下面加上    &lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;CGContextTranslateCTM(context, 0, self.view.bounds.size.height);
+CGContextScaleCTM(context, 1.0, -1.0);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;好了就写到这里了，这是我的第一篇博文，也不知道怎么写好一点，相当羞涩啊。至于今天写的有什么用途呢。那就要说到 &lt;em&gt;mask&lt;/em&gt; 这个东西了。这个等以后再写吧。&lt;/p&gt;
 
 </description>
         <pubDate>Sun, 07 Dec 2014 20:00:00 +0800</pubDate>
